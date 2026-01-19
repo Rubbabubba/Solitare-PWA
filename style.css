@@ -1,19 +1,29 @@
 :root{
   --felt1:#0b6a33;
   --felt2:#0a5e2e;
-  --ui:#0a3b1e;
-  --ui2:#0f7a3e;
   --text:#eafff2;
   --muted:#bfe9cf;
-  --cardW:min(70px, 16.5vw);
-  --cardH:calc(var(--cardW) * 1.38);
-  --radius:14px;
+
+  /* Tight gaps like the reference app */
+  --gap: 6px;
+
+  /* App padding: 12px left/right => 24px total */
+  --padX: 24px;
+
+  /* ✅ Card width derived from fitting 7 tableau columns exactly */
+  --cardW: clamp(
+    40px,
+    calc((100vw - var(--padX) - (6 * var(--gap))) / 7),
+    62px
+  );
+  --cardH: calc(var(--cardW) * 1.38);
+
   --shadow:0 10px 22px rgba(0,0,0,.25);
-  --stroke:rgba(255,255,255,.22);
 }
 
 *{ box-sizing:border-box; }
 html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
 body{
   background: radial-gradient(1200px 700px at 50% -20%, #1aa556 0%, var(--felt1) 35%, var(--felt2) 100%);
   color:var(--text);
@@ -63,7 +73,7 @@ body{
 }
 .stat{ text-align:center; min-width:70px; }
 .label{ font-size:12px; color:var(--muted); }
-.value{ font-size:20px; font-weight:700; letter-spacing:.2px; }
+.value{ font-size:20px; font-weight:800; }
 
 /* Board */
 .board{
@@ -75,22 +85,25 @@ body{
   min-height:0;
 }
 
-.topRow{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
+/* ✅ Top row: forced 6 columns that always fit */
+.topRow{ width:100%; }
+.topGrid{
+  display:grid;
+  grid-template-columns: repeat(6, var(--cardW));
+  column-gap: var(--gap);
+  align-items:start;
+  justify-content: space-between; /* spread evenly */
+  width:100%;
 }
-
-.zoneGroup{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-}
-.leftGroup{ flex:1; }
-.rightGroup{ flex:1; justify-content:flex-end; }
 
 .pileWrap{ display:flex; flex-direction:column; gap:6px; }
-.pileLabel{ font-size:12px; color:var(--muted); padding-left:6px; }
+.pileLabel{
+  font-size:11px;
+  color:var(--muted);
+  padding-left:6px;
+  white-space:nowrap;
+  line-height:1;
+}
 
 .pile{
   width: var(--cardW);
@@ -103,12 +116,6 @@ body{
   overflow: visible;
 }
 
-.foundations{
-  display:flex;
-  gap:10px;
-  justify-content:flex-end;
-}
-
 .placeholder{
   position:absolute;
   inset:0;
@@ -116,7 +123,7 @@ body{
   align-items:center;
   justify-content:center;
   color: rgba(255,255,255,.30);
-  font-weight:800;
+  font-weight:900;
   font-size: 22px;
 }
 
@@ -136,28 +143,31 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-weight:800;
+  font-weight:900;
   font-size:12px;
 }
 
-/* Tableau */
+/* ✅ Tableau: forced 7 columns that always fit */
 .tableau{
   flex:1;
-  display:flex;
-  gap:10px;
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  column-gap: var(--gap);
   min-height:0;
+  width:100%;
   padding-bottom: 8px;
 }
 
 .tableauCol{
-  flex:1;
-  width:auto;
-  min-width: var(--cardW);
-  height: 100%;
+  width:100%;
+  min-width:0;
+  height:100%;
+  border-radius:12px;
   background: rgba(0,0,0,.10);
   overflow:hidden;
 }
 
+/* Drag layer */
 .dragLayer{
   position:absolute;
   inset:0;
@@ -177,7 +187,7 @@ body{
   position:absolute;
   left:0;
   top:0;
-  touch-action:none; /* we handle dragging */
+  touch-action:none;
   user-select:none;
 }
 
@@ -200,13 +210,10 @@ body{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  font-weight:800;
+  font-weight:900;
   font-size:14px;
 }
-
-.corner .suit{
-  font-size:14px;
-}
+.corner .suit{ font-size:14px; }
 
 .centerLogo{
   flex:1;
@@ -222,7 +229,6 @@ body{
   object-fit:contain;
   filter: drop-shadow(0 5px 8px rgba(0,0,0,.18));
 }
-
 .logoFallback{
   width: 66%;
   height: 66%;
@@ -238,13 +244,11 @@ body{
   line-height:1.05;
 }
 
-/* Red/Black */
 .card.red .corner{ color:#b2001f; }
 .card.black .corner{ color:#111; }
 
-/* Stacking offsets inside tableau */
+/* Stack positioning */
 .tableauCol .card{
-  position:absolute;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -252,20 +256,19 @@ body{
 .waste .card,
 .foundation .card,
 .stock .card{
-  position:absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
 }
 
 /* Waste fan */
-.waste .card.fan1{ transform: translate(-50%, -50%) translateX(14px); }
-.waste .card.fan2{ transform: translate(-50%, -50%) translateX(28px); }
+.waste .card.fan1{ transform: translate(-50%, -50%) translateX(12px); }
+.waste .card.fan2{ transform: translate(-50%, -50%) translateX(24px); }
 
 /* Bottom bar */
 .bottombar{
   display:flex;
-  gap:10px;
+  gap: var(--gap);
   justify-content:space-between;
   padding:10px;
   border-radius: 18px;
@@ -281,7 +284,7 @@ body{
   border:1px solid rgba(255,255,255,.18);
   background: rgba(0,0,0,.22);
   color:var(--text);
-  font-weight:800;
+  font-weight:900;
   font-size:14px;
 }
 
@@ -332,10 +335,6 @@ body{
   background: rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.10);
 }
-.row select, .row input[type="checkbox"]{
-  transform: scale(1.05);
-}
-
 .help{
   padding:10px;
   border-radius: 14px;
@@ -355,10 +354,9 @@ code{ background: rgba(0,0,0,.35); padding:2px 6px; border-radius:8px; }
   font-weight:900;
 }
 
-/* Tap feedback */
 button:active{ transform: scale(.98); }
 
-/* Portrait-only: keep it stable */
+/* Portrait-only */
 @media (orientation: landscape){
   body::before{
     content:"Portrait only";
@@ -373,4 +371,15 @@ button:active{ transform: scale(.98); }
     background: rgba(0,0,0,.55);
     z-index:999;
   }
+}
+
+/* Smaller iPhones */
+@media (max-width: 390px){
+  :root{
+    --gap: 5px;
+    --cardW: clamp(38px, calc((100vw - var(--padX) - (6 * var(--gap))) / 7), 58px);
+  }
+  .stat{ min-width:64px; }
+  .value{ font-size:18px; }
+  .label{ font-size:11px; }
 }
