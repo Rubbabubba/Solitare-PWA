@@ -287,9 +287,18 @@ body{
   transform: translate(-50%, -50%);
 }
 
-/* ✅ Waste fan offsets scale with card width and stay inside pile */
-.waste .card.fan1{ transform: translate(-50%, -50%) translateX(calc(var(--cardW) * 0.18)); }
-.waste .card.fan2{ transform: translate(-50%, -50%) translateX(calc(var(--cardW) * 0.36)); }
+/* ✅ Smaller fan + shift left so the top card remains fully visible */
+.waste .card{
+  transform: translate(-50%, -50%);
+}
+
+.waste .card.fan1{
+  transform: translate(-50%, -50%) translateX(calc(var(--cardW) * -0.10));
+}
+
+.waste .card.fan2{
+  transform: translate(-50%, -50%) translateX(calc(var(--cardW) * 0.10));
+}
 
 /* Bottom bar */
 .bottombar{
