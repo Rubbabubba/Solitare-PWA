@@ -1,5 +1,5 @@
 /* Versioned cache. Bump CACHE_VERSION when you change files. */
-const CACHE_VERSION = 'solitaire-v1';
+const CACHE_VERSION = 'solitaire-v2';
 const CORE = [
   './',
   './index.html?v=1',
