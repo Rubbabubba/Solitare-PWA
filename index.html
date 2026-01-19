@@ -9,7 +9,7 @@
   <title>Solitaire</title>
 
   <link rel="manifest" href="manifest.webmanifest?v=2" />
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 
 <body>
@@ -155,11 +155,11 @@
     </div>
   </div>
 
-  <script src="app.js?v=2" defer></script>
+  <script src="app.js?v=4" defer></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=2').catch(() => {});
+        navigator.serviceWorker.register('./sw.js?v=4').catch(() => {});
       });
     }
   </script>
