@@ -81,14 +81,11 @@ let state = null;
 let timerHandle = null;
 
 // MLB logos list (loaded from assets/mlb/mlb.json if present)
-let mlbTeams = []; // array of {key, file, label}
+let mlbTeams = [];
 let mlbLoaded = false;
 
 function nowMs(){ return Date.now(); }
-
-function deepClone(obj){
-  return JSON.parse(JSON.stringify(obj));
-}
+function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--){
@@ -127,7 +124,6 @@ function makeDeck(){
         suit: s.key,
         rank: r.v,
         faceUp: false,
-        // logoKey will be filled based on deck style
         logoKey: null,
       });
     }
@@ -161,10 +157,8 @@ async function tryLoadMLB(){
 }
 
 function newGame(){
-  // Reset base state
   const deck = shuffle(makeDeck());
 
-  // Assign MLB logo random per card if selected
   if (settings.deckStyle === 'mlb_random') {
     for (const c of deck) c.logoKey = randomLogoKey();
   } else {
@@ -174,7 +168,6 @@ function newGame(){
   const piles = {};
   for (const pid of PILE_IDS) piles[pid] = [];
 
-  // Deal tableau: 7 columns, 1..7 cards each, last faceUp
   let idx = 0;
   for (let col = 0; col < 7; col++){
     const pid = `t${col}`;
@@ -185,7 +178,6 @@ function newGame(){
       piles[pid].push(card.id);
     }
   }
-  // Remaining to stock (faceDown)
   for (; idx < deck.length; idx++){
     deck[idx].faceUp = false;
     piles.stock.push(deck[idx].id);
@@ -275,7 +267,6 @@ function applySettingsFromUI(){
   settings.deckStyle = els.deckStyle.value || 'mlb_random';
   saveSettings();
 
-  // Apply draw mode to current game (safe)
   if (state){
     state.drawMode = settings.draw;
   }
@@ -316,7 +307,6 @@ function clearSavedGame(){
 
 function pushUndoSnapshot(reason){
   if (!state) return;
-  // Keep undo stack reasonable
   const snap = deepClone({
     cards: state.cards,
     piles: state.piles,
@@ -331,7 +321,6 @@ function pushUndoSnapshot(reason){
 
 function undo(){
   if (!state || !state.undo.length) return;
-  // Pop current snapshot
   state.undo.pop();
   const prev = state.undo[state.undo.length - 1];
   if (!prev) return;
@@ -365,7 +354,7 @@ function canMoveToFoundation(card, foundationPid){
   const pile = state.piles[foundationPid];
   const topId = pile.length ? pile[pile.length - 1] : null;
   if (!topId){
-    return card.rank === 1; // Ace
+    return card.rank === 1;
   }
   const top = state.cards[topId];
   return top.suit === card.suit && card.rank === top.rank + 1;
@@ -375,15 +364,13 @@ function canMoveToTableau(card, tableauPid){
   const pile = state.piles[tableauPid];
   const topId = pile.length ? pile[pile.length - 1] : null;
   if (!topId){
-    return card.rank === 13; // King
+    return card.rank === 13;
   }
   const top = state.cards[topId];
-  // Must be opposite color, descending by 1
   return cardColor(top) !== cardColor(card) && card.rank === top.rank - 1;
 }
 
 function isMovableStack(fromPid, startIndex){
-  // Tableau: can move face-up run
   if (!isTableau(fromPid)) return false;
   const pile = state.piles[fromPid];
   for (let i = startIndex; i < pile.length; i++){
@@ -404,41 +391,34 @@ function flipTopIfNeeded(pid){
   const top = state.cards[pile[pile.length - 1]];
   if (!top.faceUp){
     top.faceUp = true;
-    // scoring: flipping face-up typically +5 (standard-ish). We’ll do +5.
     state.score += 5;
   }
 }
 
-function incMove(){
-  state.moves += 1;
-}
+function incMove(){ state.moves += 1; }
 
 function checkWin(){
   const totalInFoundations =
     state.piles.f0.length + state.piles.f1.length + state.piles.f2.length + state.piles.f3.length;
   if (totalInFoundations === 52){
     state.won = true;
-    // Small win bonus
     state.score += 100;
   }
 }
 
 function moveCards(cardIds, fromPid, toPid){
-  // cardIds are consecutive at end of from pile (or single)
   const from = state.piles[fromPid];
   const to = state.piles[toPid];
 
-  // Remove from end
   for (let i = 0; i < cardIds.length; i++){
     const expect = from[from.length - cardIds.length + i];
-    if (expect !== cardIds[i]) return false; // safety
+    if (expect !== cardIds[i]) return false;
   }
   from.splice(from.length - cardIds.length, cardIds.length);
   to.push(...cardIds);
 
-  // Scoring
   if (isFoundation(toPid)){
-    state.score += 10; // place to foundation
+    state.score += 10;
   }
   incMove();
   flipTopIfNeeded(fromPid);
@@ -450,7 +430,6 @@ function autoMoveSingle(cardId){
   const card = state.cards[cardId];
   if (!card.faceUp) return false;
 
-  // Try foundations first
   for (const f of ['f0','f1','f2','f3']){
     if (canMoveToFoundation(card, f)){
       const loc = getPileOfCard(cardId);
@@ -465,13 +444,11 @@ function autoMoveSingle(cardId){
     }
   }
 
-  // Then tableau
   for (let t = 0; t < 7; t++){
     const pid = `t${t}`;
     if (canMoveToTableau(card, pid)){
       const loc = getPileOfCard(cardId);
       if (!loc) return false;
-      // Only move single from waste/foundation, or from tableau if it's the top card
       if (isTableau(loc.pid)){
         const pile = state.piles[loc.pid];
         if (loc.idx !== pile.length - 1) continue;
@@ -494,7 +471,6 @@ function drawFromStock(){
   const waste = state.piles.waste;
 
   if (!stock.length){
-    // Reset: move waste back to stock faceDown
     if (!waste.length) return;
     pushUndoSnapshot('recycle');
     while (waste.length){
@@ -502,7 +478,6 @@ function drawFromStock(){
       state.cards[id].faceUp = false;
       stock.push(id);
     }
-    // Small scoring penalty optional; we’ll do none for now.
     incMove();
     renderAll();
     saveState();
@@ -534,7 +509,6 @@ function cardElement(cardId){
 
 function clearPileDom(pid){
   const el = pileEl(pid);
-  // keep placeholders in foundation
   if (isFoundation(pid)){
     const ph = el.querySelector('.placeholder');
     el.innerHTML = '';
@@ -550,6 +524,7 @@ function clearPileDom(pid){
   el.innerHTML = '';
 }
 
+/* ✅ Card DOM uses .corner.top and .corner.bottom */
 function makeCardDom(card){
   const div = document.createElement('div');
   div.className = `card ${cardColor(card)}`;
@@ -566,13 +541,12 @@ function makeCardDom(card){
   inner.className = 'cardInner';
 
   const top = document.createElement('div');
-  top.className = 'corner';
+  top.className = 'corner top';
   top.innerHTML = `<span class="rank">${rankText(card.rank)}</span><span class="suit">${s.symbol}</span>`;
 
   const center = document.createElement('div');
   center.className = 'centerLogo';
 
-  // Logo: MLB random
   if (state.deckStyle === 'mlb_random' && card.logoKey){
     const team = mlbTeams.find(t => t.key === card.logoKey) || null;
     if (team && team.file){
@@ -581,7 +555,6 @@ function makeCardDom(card){
       img.alt = team.label || card.logoKey;
       img.src = `assets/mlb/${team.file}`;
       img.onerror = () => {
-        // fallback to initials
         img.remove();
         center.appendChild(makeLogoFallback(team.label || card.logoKey));
       };
@@ -590,7 +563,6 @@ function makeCardDom(card){
       center.appendChild(makeLogoFallback(card.logoKey));
     }
   } else {
-    // Classic: show suit large
     const fb = document.createElement('div');
     fb.className = 'logoFallback';
     fb.textContent = s.symbol;
@@ -599,7 +571,7 @@ function makeCardDom(card){
   }
 
   const bottom = document.createElement('div');
-  bottom.className = 'corner';
+  bottom.className = 'corner bottom';
   bottom.innerHTML = `<span class="rank">${rankText(card.rank)}</span><span class="suit">${s.symbol}</span>`;
 
   inner.appendChild(top);
@@ -626,13 +598,12 @@ function renderPile(pid){
   const pile = state.piles[pid];
 
   if (pid === 'stock'){
-    // render just a back if any
     if (pile.length){
       const topId = pile[pile.length - 1];
       const c = state.cards[topId];
       const fake = { ...c, faceUp: false };
       const dom = makeCardDom(fake);
-      dom.dataset.id = topId; // not truly movable
+      dom.dataset.id = topId;
       dom.style.pointerEvents = 'none';
       el.appendChild(dom);
     }
@@ -640,7 +611,6 @@ function renderPile(pid){
   }
 
   if (pid === 'waste'){
-    // show up to 3 fanned
     const show = pile.slice(-3);
     show.forEach((id, i) => {
       const dom = makeCardDom(state.cards[id]);
@@ -659,14 +629,12 @@ function renderPile(pid){
   }
 
   if (isTableau(pid)){
-    // stack down the column
     let y = 8;
     for (let i = 0; i < pile.length; i++){
       const id = pile[i];
       const c = state.cards[id];
       const dom = makeCardDom(c);
       dom.style.top = `${y}px`;
-      // tighter for face-down, wider for face-up
       y += c.faceUp ? 26 : 14;
       el.appendChild(dom);
     }
@@ -679,36 +647,30 @@ function renderAll(){
   for (const pid of PILE_IDS){
     renderPile(pid);
   }
-  wireCardHandlers();
   if (settings.autoFoundation) {
-    // Run a safe, small auto-foundation pass (only from waste & tableau tops)
     autoFoundationPass();
   }
 }
 
-function wireCardHandlers(){
-  // Remove previous by cloning piles? We’ll bind fresh listeners using event delegation
-  // (Keep it simple and reliable)
-}
+let drag = null;
 
-function findTopMovableAtPile(pid, clientX, clientY){
-  const el = pileEl(pid);
-  const cards = [...el.querySelectorAll('.card')];
-
-  // pick the topmost visible card that intersects point (iterate reverse)
-  for (let i = cards.length - 1; i >= 0; i--){
-    const c = cards[i];
-    const rect = c.getBoundingClientRect();
-    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom){
-      return c.dataset.id;
+function pidFromPoint(x, y){
+  const nodes = document.querySelectorAll('[data-pile]');
+  for (const n of nodes){
+    const rect = n.getBoundingClientRect();
+    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom){
+      return n.dataset.pile;
     }
   }
   return null;
 }
 
-/* ---------- Input handling (tap + drag) ---------- */
-
-let drag = null;
+function cardRunIsFaceUp(ids){
+  for (const id of ids){
+    if (!state.cards[id].faceUp) return false;
+  }
+  return true;
+}
 
 function onPointerDown(e){
   if (!state || state.won) return;
@@ -719,41 +681,32 @@ function onPointerDown(e){
 
   const pid = pileNode.dataset.pile;
 
-  // Stock click handled separately
   if (pid === 'stock'){
     e.preventDefault();
     drawFromStock();
     return;
   }
 
-  // Only start drag on a card
-  if (!target) {
-    // Tap empty tableau to do nothing
-    return;
-  }
+  if (!target) return;
 
   const cardId = target.dataset.id;
   const loc = getPileOfCard(cardId);
   if (!loc) return;
 
-  // Waste: only top card is movable
   if (pid === 'waste'){
     if (cardId !== topCardId('waste')) return;
   }
 
-  // Foundation: only top card movable
   if (isFoundation(pid)){
     if (cardId !== topCardId(pid)) return;
   }
 
-  // Tableau: can drag a stack if it's a valid face-up run
   let movingIds = [cardId];
   if (isTableau(pid)){
     if (!isMovableStack(pid, loc.idx)) return;
     movingIds = getCardRunFromTableau(pid, loc.idx);
   }
 
-  // If not face up, allow flip if it is the top card in tableau
   const card = state.cards[cardId];
   if (isTableau(pid) && cardId === topCardId(pid) && !card.faceUp){
     pushUndoSnapshot('flip');
@@ -765,10 +718,7 @@ function onPointerDown(e){
     return;
   }
 
-  // Only allow moving faceUp cards
-  for (const id of movingIds){
-    if (!state.cards[id].faceUp) return;
-  }
+  if (!cardRunIsFaceUp(movingIds)) return;
 
   e.preventDefault();
 
@@ -788,7 +738,6 @@ function onPointerDown(e){
     ghostEls: [],
   };
 
-  // Create ghosts in dragLayer and hide originals
   const originals = movingIds.map(id => cardElement(id)).filter(Boolean);
   originals.forEach(el => { el.style.visibility = 'hidden'; });
 
@@ -811,7 +760,6 @@ function onPointerDown(e){
     drag.ghostEls.push(ghost);
   }
 
-  // Capture pointer
   target.setPointerCapture?.(e.pointerId);
 }
 
@@ -832,98 +780,14 @@ function onPointerMove(e){
   }
 }
 
-function onPointerUp(e){
-  if (!drag || e.pointerId !== drag.pointerId) return;
-
-  // Reveal originals by default
-  const originals = drag.movingIds.map(id => cardElement(id)).filter(Boolean);
-  originals.forEach(el => { el.style.visibility = ''; });
-
-  // Tap-to-move (if not moved)
-  if (!drag.moved){
-    els.dragLayer.innerHTML = '';
-    const single = drag.movingIds[0];
-    // Attempt auto move for tapped card (single only)
-    if (drag.movingIds.length === 1){
-      const moved = autoMoveSingle(single);
-      if (!moved && settings.hints){
-        flashHint(single);
-      }
-    }
-    drag = null;
-    return;
-  }
-
-  // Drop handling
-  const dropPid = pidFromPoint(e.clientX, e.clientY);
-
-  els.dragLayer.innerHTML = '';
-
-  if (!dropPid){
-    drag = null;
-    renderAll();
-    return;
-  }
-
-  // Validate and move
-  const fromPid = drag.fromPid;
-  const movingIds = drag.movingIds;
-
-  // Only allow moving stack onto tableau; foundations only accept single
-  const leadCard = state.cards[movingIds[0]];
-
-  let canDrop = false;
-  if (isFoundation(dropPid)){
-    if (movingIds.length === 1 && canMoveToFoundation(leadCard, dropPid)){
-      canDrop = true;
-    }
-  } else if (isTableau(dropPid)){
-    if (canMoveToTableau(leadCard, dropPid)){
-      canDrop = true;
-    }
-  } else if (dropPid === 'waste' || dropPid === 'stock'){
-    canDrop = false;
-  }
-
-  if (canDrop){
-    pushUndoSnapshot('move');
-    const ok = moveCards(movingIds, fromPid, dropPid);
-    if (!ok){
-      renderAll();
-    } else {
-      renderAll();
-      saveState();
-    }
-  } else {
-    // invalid drop -> snap back
-    renderAll();
-  }
-
-  drag = null;
-}
-
-function pidFromPoint(x, y){
-  // Determine which pile area the point is in
-  const nodes = document.querySelectorAll('[data-pile]');
-  for (const n of nodes){
-    const rect = n.getBoundingClientRect();
-    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom){
-      return n.dataset.pile;
-    }
-  }
-  return null;
-}
-
-/* ---------- Hint + simple animations ---------- */
-
 function flashHint(cardId){
   const el = cardElement(cardId);
   if (!el) return;
   el.animate(
     [
-      { transform: el.style.transform || '', filter: 'brightness(1)' },
-      { transform: (el.style.transform || '') + ' scale(1.04)', filter: 'brightness(1.25)' },
-      { transform: el.style.transform || '', filter: 'brightness(1)' },
+      { filter: 'brightness(1)' },
+      { filter: 'brightness(1.25)' },
+      { filter: 'brightness(1)' },
     ],
     { duration: 420, iterations: 1, easing: 'ease-out' }
   );
@@ -932,9 +796,7 @@ function flashHint(cardId){
 function hint(){
   if (!state) return;
 
-  // Try: any waste top to foundation/tableau, any tableau top to foundation/tableau
   const candidates = [];
-
   const w = topCardId('waste');
   if (w) candidates.push(w);
 
@@ -948,14 +810,12 @@ function hint(){
     const c = state.cards[id];
     if (!c.faceUp) continue;
 
-    // Check if it can go to foundation
     for (const f of ['f0','f1','f2','f3']){
       if (canMoveToFoundation(c, f)){
         flashHint(id);
         return;
       }
     }
-    // Check tableau
     for (let t = 0; t < 7; t++){
       const pid = `t${t}`;
       const loc = getPileOfCard(id);
@@ -967,7 +827,6 @@ function hint(){
     }
   }
 
-  // No obvious hint -> flash stock
   els.stock.animate(
     [{ transform:'scale(1)' }, { transform:'scale(1.04)' }, { transform:'scale(1)' }],
     { duration: 360, easing:'ease-out' }
@@ -975,7 +834,6 @@ function hint(){
 }
 
 function autoFoundationPass(){
-  // Only move safe tops (waste top + tableau tops)
   const ids = [];
   const w = topCardId('waste');
   if (w) ids.push(w);
@@ -984,7 +842,6 @@ function autoFoundationPass(){
     if (top) ids.push(top);
   }
 
-  // attempt a few moves max to avoid loops
   let movedAny = false;
   let tries = 0;
 
@@ -1013,7 +870,64 @@ function autoFoundationPass(){
   }
 }
 
-/* ---------- Event wiring ---------- */
+function onPointerUp(e){
+  if (!drag || e.pointerId !== drag.pointerId) return;
+
+  const originals = drag.movingIds.map(id => cardElement(id)).filter(Boolean);
+  originals.forEach(el => { el.style.visibility = ''; });
+
+  if (!drag.moved){
+    els.dragLayer.innerHTML = '';
+    const single = drag.movingIds[0];
+    if (drag.movingIds.length === 1){
+      const moved = autoMoveSingle(single);
+      if (!moved && settings.hints){
+        flashHint(single);
+      }
+    }
+    drag = null;
+    return;
+  }
+
+  const dropPid = pidFromPoint(e.clientX, e.clientY);
+  els.dragLayer.innerHTML = '';
+
+  if (!dropPid){
+    drag = null;
+    renderAll();
+    return;
+  }
+
+  const fromPid = drag.fromPid;
+  const movingIds = drag.movingIds;
+  const leadCard = state.cards[movingIds[0]];
+
+  let canDrop = false;
+  if (isFoundation(dropPid)){
+    if (movingIds.length === 1 && canMoveToFoundation(leadCard, dropPid)){
+      canDrop = true;
+    }
+  } else if (isTableau(dropPid)){
+    if (canMoveToTableau(leadCard, dropPid)){
+      canDrop = true;
+    }
+  }
+
+  if (canDrop){
+    pushUndoSnapshot('move');
+    const ok = moveCards(movingIds, fromPid, dropPid);
+    if (ok){
+      renderAll();
+      saveState();
+    } else {
+      renderAll();
+    }
+  } else {
+    renderAll();
+  }
+
+  drag = null;
+}
 
 function openSettings(){
   syncSettingsUI();
@@ -1025,13 +939,11 @@ function closeSettings(){
 }
 
 function wireUI(){
-  // Pointer events for drag/tap on board
   document.addEventListener('pointerdown', onPointerDown, { passive: false });
   document.addEventListener('pointermove', onPointerMove, { passive: false });
   document.addEventListener('pointerup', onPointerUp, { passive: false });
   document.addEventListener('pointercancel', onPointerUp, { passive: false });
 
-  // Buttons
   els.btnSettings.addEventListener('click', openSettings);
   els.btnCloseModal.addEventListener('click', closeSettings);
   els.modalBackdrop.addEventListener('click', (e) => {
@@ -1050,7 +962,6 @@ function wireUI(){
 
   els.btnUndo.addEventListener('click', () => undo());
 
-  // Settings inputs
   els.drawMode.addEventListener('change', () => {
     applySettingsFromUI();
     if (state){
@@ -1058,16 +969,9 @@ function wireUI(){
       saveState();
     }
   });
-  els.optHints.addEventListener('change', () => {
-    applySettingsFromUI();
-  });
-  els.optAutoFoundation.addEventListener('change', () => {
-    applySettingsFromUI();
-  });
-  els.deckStyle.addEventListener('change', () => {
-    applySettingsFromUI();
-    // deck style changes will take effect next new game
-  });
+  els.optHints.addEventListener('change', () => applySettingsFromUI());
+  els.optAutoFoundation.addEventListener('change', () => applySettingsFromUI());
+  els.deckStyle.addEventListener('change', () => applySettingsFromUI());
 
   els.btnResetStats.addEventListener('click', () => {
     clearSavedGame();
@@ -1075,7 +979,6 @@ function wireUI(){
     newGame();
   });
 
-  // Stock click (also handled in pointerdown on pile)
   els.stock.addEventListener('click', (e) => {
     e.preventDefault();
     drawFromStock();
@@ -1089,18 +992,15 @@ async function init(){
 
   wireUI();
 
-  // If saved game exists, load it; else start new
   const saved = loadState();
   if (saved){
     state = saved;
-    // Keep settings in sync (without overriding user settings)
     settings.draw = state.drawMode === 3 ? 3 : 1;
     settings.deckStyle = state.deckStyle || settings.deckStyle;
 
     startTimer();
     renderAll();
   } else {
-    // Ensure we have MLB list before assigning logos
     newGame();
   }
 }
