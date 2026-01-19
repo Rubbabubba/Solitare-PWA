@@ -4,13 +4,9 @@
   --text:#eafff2;
   --muted:#bfe9cf;
 
-  /* Tight gaps like the reference app */
   --gap: 6px;
-
-  /* App padding: 12px left/right => 24px total */
   --padX: 24px;
 
-  /* ✅ Card width derived from fitting 7 tableau columns exactly */
   --cardW: clamp(
     40px,
     calc((100vw - var(--padX) - (6 * var(--gap))) / 7),
@@ -85,14 +81,14 @@ body{
   min-height:0;
 }
 
-/* ✅ Top row: forced 6 columns that always fit */
+/* Top row grid */
 .topRow{ width:100%; }
 .topGrid{
   display:grid;
   grid-template-columns: repeat(6, var(--cardW));
   column-gap: var(--gap);
   align-items:start;
-  justify-content: space-between; /* spread evenly */
+  justify-content: space-between;
   width:100%;
 }
 
@@ -127,9 +123,7 @@ body{
   font-size: 22px;
 }
 
-.stock{
-  background: rgba(0,0,0,.22);
-}
+.stock{ background: rgba(0,0,0,.22); }
 .stockBadge{
   position:absolute;
   right:-6px;
@@ -147,7 +141,7 @@ body{
   font-size:12px;
 }
 
-/* ✅ Tableau: forced 7 columns that always fit */
+/* Tableau grid */
 .tableau{
   flex:1;
   display:grid;
@@ -175,7 +169,7 @@ body{
   z-index:50;
 }
 
-/* Cards */
+/* ✅ Cards (fixed corners + true centered logo) */
 .card{
   width: var(--cardW);
   height: var(--cardH);
@@ -189,6 +183,7 @@ body{
   top:0;
   touch-action:none;
   user-select:none;
+  overflow:hidden; /* ✅ ensures nothing visually leaks out */
 }
 
 .card.faceDown{
@@ -200,38 +195,55 @@ body{
 .cardInner{
   position:absolute;
   inset:0;
-  padding:8px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
+  padding: 6px;          /* ✅ tighter for small cards */
 }
 
+/* Corner blocks are absolutely positioned so they never drift out */
 .corner{
+  position:absolute;
+  left:6px;
+  right:6px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   font-weight:900;
-  font-size:14px;
+  font-size: 13px;       /* ✅ slightly smaller */
+  line-height: 1;
+  pointer-events:none;
 }
-.corner .suit{ font-size:14px; }
 
+.corner.top{
+  top:6px;
+}
+
+.corner.bottom{
+  bottom:6px;
+}
+
+/* Center is truly centered between edges */
 .centerLogo{
-  flex:1;
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%, -50%);
+  width: 72%;
+  height: 60%;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:6px;
+  pointer-events:none;
 }
 
 .logoImg{
-  width: 66%;
-  height: 66%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit:contain;
   filter: drop-shadow(0 5px 8px rgba(0,0,0,.18));
 }
+
 .logoFallback{
-  width: 66%;
-  height: 66%;
+  width: 100%;
+  height: 100%;
   border-radius: 14px;
   background: rgba(0,0,0,.08);
   display:flex;
