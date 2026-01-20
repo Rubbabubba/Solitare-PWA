@@ -8,13 +8,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Solitaire</title>
 
-  <link rel="manifest" href="manifest.webmanifest?v=4" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="manifest" href="manifest.webmanifest?v=6" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 
 <body>
   <div id="app">
-    <!-- Top bar -->
     <header class="topbar">
       <button id="btnMenu" class="iconBtn" aria-label="Menu">☰</button>
 
@@ -36,10 +35,9 @@
       <button id="btnRight" class="iconBtn" aria-label="Info">🎮</button>
     </header>
 
-    <!-- Board -->
     <main class="board" aria-label="Solitaire board">
 
-      <!-- ✅ Top row as 6-column grid -->
+      <!-- ✅ Top row: Stock | Waste | Foundations group -->
       <section class="topRow">
         <div class="topGrid">
           <div class="pileWrap">
@@ -54,37 +52,26 @@
             <div id="waste" class="pile waste" data-pile="waste" aria-label="Waste pile"></div>
           </div>
 
-          <div class="pileWrap">
+          <div class="foundationsWrap">
             <div class="pileLabel">Foundation</div>
-            <div class="pile foundation" id="f0" data-pile="f0" aria-label="Foundation 1">
-              <div class="placeholder">A</div>
-            </div>
-          </div>
-
-          <div class="pileWrap">
-            <div class="pileLabel">&nbsp;</div>
-            <div class="pile foundation" id="f1" data-pile="f1" aria-label="Foundation 2">
-              <div class="placeholder">A</div>
-            </div>
-          </div>
-
-          <div class="pileWrap">
-            <div class="pileLabel">&nbsp;</div>
-            <div class="pile foundation" id="f2" data-pile="f2" aria-label="Foundation 3">
-              <div class="placeholder">A</div>
-            </div>
-          </div>
-
-          <div class="pileWrap">
-            <div class="pileLabel">&nbsp;</div>
-            <div class="pile foundation" id="f3" data-pile="f3" aria-label="Foundation 4">
-              <div class="placeholder">A</div>
+            <div class="foundationsRow">
+              <div class="pile foundation" id="f0" data-pile="f0" aria-label="Foundation 1">
+                <div class="placeholder">A</div>
+              </div>
+              <div class="pile foundation" id="f1" data-pile="f1" aria-label="Foundation 2">
+                <div class="placeholder">A</div>
+              </div>
+              <div class="pile foundation" id="f2" data-pile="f2" aria-label="Foundation 3">
+                <div class="placeholder">A</div>
+              </div>
+              <div class="pile foundation" id="f3" data-pile="f3" aria-label="Foundation 4">
+                <div class="placeholder">A</div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ✅ Tableau as 7-column grid -->
       <section class="tableau" aria-label="Tableau">
         <div class="col pile tableauCol" id="t0" data-pile="t0" aria-label="Tableau column 1"></div>
         <div class="col pile tableauCol" id="t1" data-pile="t1" aria-label="Tableau column 2"></div>
@@ -98,7 +85,6 @@
       <div id="dragLayer" class="dragLayer" aria-hidden="true"></div>
     </main>
 
-    <!-- Bottom bar -->
     <footer class="bottombar">
       <button id="btnSettings" class="bottomBtn">Settings</button>
       <button id="btnNew" class="bottomBtn">New</button>
@@ -106,7 +92,6 @@
       <button id="btnUndo" class="bottomBtn">Undo</button>
     </footer>
 
-    <!-- Settings modal -->
     <div id="modalBackdrop" class="backdrop hidden" role="dialog" aria-modal="true" aria-label="Settings">
       <div class="modal">
         <div class="modalHeader">
@@ -141,25 +126,17 @@
             </select>
           </label>
 
-          <div class="help">
-            <div class="helpTitle">MLB logos</div>
-            <div class="helpText">
-              Add logo images under <code>assets/mlb/</code> and list them in
-              <code>assets/mlb/mlb.json</code>.
-            </div>
-          </div>
-
           <button id="btnResetStats" class="dangerBtn">Clear Saved Game</button>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="app.js?v=4" defer></script>
+  <script src="app.js?v=6" defer></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=4').catch(() => {});
+        navigator.serviceWorker.register('./sw.js?v=6').catch(() => {});
       });
     }
   </script>
