@@ -995,14 +995,24 @@ async function init(){
   const saved = loadState();
   if (saved){
     state = saved;
-    settings.draw = state.drawMode === 3 ? 3 : 1;
-    settings.deckStyle = state.deckStyle || settings.deckStyle;
+
+    // ✅ Ensure UI/settings win, so "Draw 1" actually draws 1
+    // Load settings already happened above; now force state to match settings.
+    state.drawMode = settings.draw === 3 ? 3 : 1;
+
+    // Keep deck style consistent too
+    state.deckStyle = settings.deckStyle || state.deckStyle || 'mlb_random';
+
+    // ✅ Sync settings UI so it matches what the game will do
+    syncSettingsUI();
 
     startTimer();
     renderAll();
+    saveState();
   } else {
     newGame();
   }
+
 }
 
 init();
